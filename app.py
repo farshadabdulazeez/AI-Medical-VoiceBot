@@ -104,7 +104,7 @@ with gr.Blocks(theme=gr.themes.Default(primary_hue="green", secondary_hue="gray"
         image_input = gr.Image(
             label="Upload an Image",
             type="filepath",
-            height=500,  # Height set to 500px
+            height=300,  # Height set to 500px
             width=200,   # Width set to 200px
             scale=True   # Ensures the image fits within the container
         )
