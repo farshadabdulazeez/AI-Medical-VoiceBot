@@ -1,6 +1,6 @@
 # Import necessary libraries
-from dotenv import load_dotenv  # For loading environment variables from a .env file
-load_dotenv()  # Load environment variables
+from dotenv import load_dotenv 
+load_dotenv()  
 
 import os  # For interacting with the operating system
 from gtts import gTTS  # Google Text-to-Speech library

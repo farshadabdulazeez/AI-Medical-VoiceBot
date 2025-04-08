@@ -13,7 +13,6 @@ from doctor_voice_tts import text_to_speech_with_gtts, text_to_speech_with_eleve
 
 # Step 1: Define System Prompt
 # This prompt guides the AI model to act like a professional doctor.
-# It ensures responses are concise, human-like, and tailored for real-world interaction.
 system_prompt = """You have to act as a professional doctor. Keep in mind this is for learning purposes only. 
                 Do not add any numbers or special characters in your response. Your response should be in one long paragraph.
                 Always answer as if you are addressing a real person. Mimic an actual doctor's tone, not an AI bot.
@@ -35,23 +34,31 @@ def process_inputs(audio_filepath, image_filepath):
         str: Doctor's response based on the analysis.
         str: Path to the generated audio file (Doctor's voice).
     """
+    # Initialize outputs
+    speech_to_text_output = "No audio provided."
+    doctor_response = "No analysis performed."
+    temp_audio_file = None
+
     try:
         # Step 2a: Convert Audio to Text (Speech-to-Text)
-        print("Transcribing audio...")
-        speech_to_text_output = transcribe_with_groq(
-            GROQ_API_KEY=os.environ.get("GROQ_API_KEY"),  # Retrieve API key
-            audio_filepath=audio_filepath,
-            stt_model="whisper-large-v3"
-        )
-        print(f"Transcription complete: {speech_to_text_output}")
+        if audio_filepath:
+            print("Transcribing audio...")
+            speech_to_text_output = transcribe_with_groq(
+                GROQ_API_KEY=os.environ.get("GROQ_API_KEY"),  # Retrieve API key
+                audio_filepath=audio_filepath,
+                stt_model="whisper-large-v3"
+            )
+            print(f"Transcription complete: {speech_to_text_output}")
+        else:
+            speech_to_text_output = "No audio provided."
     except Exception as e:
         print(f"Error during transcription: {e}")
-        speech_to_text_output = "Unable to transcribe audio."
+        speech_to_text_output = "An error occurred while transcribing the audio."
 
     try:
         # Step 2b: Analyze Image (if provided)
-        print("Analyzing image...")
         if image_filepath:
+            print("Analyzing image...")
             doctor_response = analyze_image_with_query(
                 query=system_prompt + speech_to_text_output,  # Combine system prompt with transcription
                 encoded_image=encode_image(image_filepath),  # Encode the image into base64
@@ -60,43 +67,80 @@ def process_inputs(audio_filepath, image_filepath):
             print(f"Doctor's response: {doctor_response}")
         else:
             doctor_response = "No image provided for analysis."
-            print(doctor_response)
     except Exception as e:
         print(f"Error during image analysis: {e}")
-        doctor_response = "Unable to analyze the image."
+        doctor_response = "An error occurred while analyzing the image."
 
     try:
         # Step 2c: Convert Doctor's Response to Speech (Text-to-Speech)
         print("Generating doctor's voice...")
-        voice_of_doctor = text_to_speech_with_elevenlabs(
+        temp_audio_file = "temp_output.mp3"  # Temporary audio file
+        text_to_speech_with_elevenlabs(
             input_text=doctor_response,
-            output_filepath="final.mp3"
+            output_filepath=temp_audio_file
         )
         print("Voice generation complete.")
     except Exception as e:
         print(f"Error during voice generation: {e}")
-        voice_of_doctor = None
+        temp_audio_file = None
 
-    return speech_to_text_output, doctor_response, voice_of_doctor
+    return speech_to_text_output, doctor_response, temp_audio_file
 
 
-# Step 3: Create Gradio Interface
-# This defines the user interface for interacting with the AI doctor.
-iface = gr.Interface(
-    fn=process_inputs,  # Function to handle inputs
-    inputs=[
-        gr.Audio(sources=["microphone"], type="filepath"),  # Microphone input for audio
-        gr.Image(type="filepath")  # Image upload input
-    ],
-    outputs=[
-        gr.Textbox(label="Speech to Text"),  # Display transcribed text
-        gr.Textbox(label="Doctor's Response"),  # Display doctor's response
-        gr.Audio(label="Doctor's Voice")  # Play the generated audio
-    ],
-    title="AI Doctor with Vision and Voice",  # Title of the interface
-    description="Upload an image and/or record your voice to interact with the AI doctor."  # Description
-)
+# Step 3: Create Gradio Interface with Enhanced UI
+with gr.Blocks(theme=gr.themes.Default(primary_hue="green", secondary_hue="gray")) as demo:
+    # Heading Section
+    with gr.Row():
+        gr.Markdown("""
+        <div id="top" style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #28a745;">🏥 AI Medical VoiceBot</h1>
+            <p>Upload an image and/or record your voice to interact with the AI doctor.</p>
+        </div>
+        """)
+
+    # Main Interface
+    with gr.Row():
+        # Fixed-size Image Upload with Scale Fit
+        image_input = gr.Image(
+            label="Upload an Image",
+            type="filepath",
+            height=500,  # Height set to 500px
+            width=200,   # Width set to 200px
+            scale=True   # Ensures the image fits within the container
+        )
+        audio_input = gr.Audio(label="Record Your Voice", sources=["microphone"], type="filepath")
+
+    with gr.Row():
+        submit_button = gr.Button("Submit", variant="primary")
+
+    with gr.Column():
+        speech_to_text_output = gr.Textbox(label="🎤 Speech to Text", lines=3)
+        doctor_response_output = gr.Textbox(label="🩺 Doctor's Response", lines=5)
+        doctor_voice_output = gr.Audio(label="🎧 Doctor's Voice", autoplay=False)  # Autoplay disabled initially
+
+    def on_submit(audio_filepath, image_filepath):
+        # Process inputs
+        speech_to_text_output, doctor_response, temp_audio_file = process_inputs(audio_filepath, image_filepath)
+
+        # Return outputs
+        return speech_to_text_output, doctor_response, temp_audio_file
+
+    submit_button.click(
+        fn=on_submit,
+        inputs=[audio_input, image_input],  # Use Gradio components here
+        outputs=[speech_to_text_output, doctor_response_output, doctor_voice_output]
+    )
+
+    # Disclaimer Section at the End
+    with gr.Row():
+        gr.Markdown("""
+        <div style="text-align: center; margin-top: 40px; background-color: #000000; padding: 15px; border-radius: 5px; border: 1px solid #c3e6cb;">
+            <h2 style="color: #155724;">⚠️ Important Disclaimer</h2>
+            <p>This application is for educational and demonstration purposes only. It is not intended to provide medical advice or replace professional healthcare services. The responses generated by this app are not a substitute for consulting a licensed healthcare provider. Always seek professional medical advice for any health concerns.</p>
+            <p><a href="#top" style="color: #28a745; text-decoration: none;">Back to Top</a></p>
+        </div>
+        """)
 
 # Step 4: Launch the Interface
 if __name__ == "__main__":
-    iface.launch(debug=True)  # Launch the Gradio app in debug mode
+    demo.launch(debug=True, share=True)
