@@ -82,19 +82,19 @@ def transcribe_with_groq(stt_model, audio_filepath, GROQ_API_KEY):
 
 # Example usage of the transcription function
 # Uncomment the lines below to test transcription
-transcript = transcribe_with_groq(stt_model, audio_filepath, GROQ_API_KEY)
-print(f"Transcription: {transcript}")
+# transcript = transcribe_with_groq(stt_model, audio_filepath, GROQ_API_KEY)
+# print(f"Transcription: {transcript}")
 
 # Combined Test: Record audio and transcribe it
-# if __name__ == "__main__":
-#     # Step 1: Record audio
-#     logging.info("Starting audio recording...")
-#     record_audio(file_path=audio_filepath)
+if __name__ == "__main__":
+    # Step 1: Record audio
+    logging.info("Starting audio recording...")
+    record_audio(file_path=audio_filepath)
     
-#     # Step 2: Transcribe the recorded audio
-#     logging.info("Starting transcription...")
-#     transcript = transcribe_with_groq(stt_model, audio_filepath, GROQ_API_KEY)
-#     if transcript:
-#         logging.info(f"Transcription: {transcript}")
-#     else:
-#         logging.error("Transcription failed.")
+    # Step 2: Transcribe the recorded audio
+    logging.info("Starting transcription...")
+    transcript = transcribe_with_groq(stt_model, audio_filepath, GROQ_API_KEY)
+    if transcript:
+        logging.info(f"Transcription: {transcript}")
+    else:
+        logging.error("Transcription failed.")

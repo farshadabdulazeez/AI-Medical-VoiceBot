@@ -1,14 +1,12 @@
 # Import necessary libraries
-from dotenv import load_dotenv  # For loading environment variables from a .env file
-import os  # For interacting with the operating system (e.g., accessing environment variables)
+from dotenv import load_dotenv 
+import os  
 import base64  # For encoding images into base64 format
 
 # Load environment variables from a .env file (if present)
 load_dotenv()
 
 # Step 1: Setup GROQ API key
-# Retrieve the GROQ_API_KEY from the environment variables.
-# This key is required to authenticate requests to the Groq API.
 # Retrieve API key
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 if not GROQ_API_KEY:
@@ -21,13 +19,11 @@ else:
 # Function to encode an image file into base64 format.
 # This is necessary because the Groq API expects images in base64-encoded format.
 def encode_image(image_path):
-    # Open the image file in binary mode ("rb").
     with open(image_path, "rb") as image_file:
         # Read the file content, encode it in base64, and decode it to a UTF-8 string.
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 # Step 3: Setup Multimodal LLM
-# Import the Groq client library to interact with the Groq API.
 from groq import Groq
 
 # Define a query for the AI model to analyze the image.
@@ -35,7 +31,6 @@ from groq import Groq
 query = "Is there something wrong with my face?"
 
 # Specify the model to use for the analysis.
-# In this case, we are using the "llama-3.2-90b-vision-preview" multimodal model.
 model = "llama-3.2-90b-vision-preview"
 
 # Function to analyze an image with a given query.
@@ -75,8 +70,7 @@ def analyze_image_with_query(query, model, encoded_image):
 
 # Main Execution Block
 if __name__ == "__main__":
-    # Path to the input image (relative path within the project directory)
-    image_path = "acne.webp"  # Replace with your image file name
+    image_path = "acne.webp"  
     
     # Encode the image into base64 format
     try:
